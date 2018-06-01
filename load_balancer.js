@@ -1,37 +1,24 @@
-const http = require("http");
-const PORTS = (process.env.PORTS).split(',') || [];
-const PORT = process.env.PORT || 3000;
 
-const server = http.createServer().listen(PORT);
 
-let portIndex = 0;
 
-function roundRobinPort () {
-    const port = PORTS[portIndex];
-    portIndex++;
+var net = require('net');
 
-    if (portIndex > PORTS.length - 1) {
-        portIndex = 0;
-    }
+const PORTS =  [5001,5002,5003];
 
-    return port;
-}
+net.createServer(function (server) {
 
+    let port = 0;// variable to define the port
+    server.on('data', function(data){
+        port = randomPort();
+        console.log('Port aléatoire : '+ port);
+        net.connect({port: port, host: '127.0.0.1'}, function(){
+            console.log('go to server with port : ' + port); // log server
+            this.write(data);
+        });
+    })
+}).listen(5000);
+
+// random of 3 servers port
 function randomPort () {
-    return PORTS[Math.floor(Math.random() * (PORTS.length - 1))];
+    return PORTS[Math.floor((Math.random() * 3))];
 }
-
-server.on("request", (req, res) => {
-    const connector = http.request(
-        {
-            host: 'localhost',
-            port: roundRobinPort(),
-            path: req.url,
-            method: req.method,
-            headers: req.headers
-        },
-        resp => resp.pipe(res)
-    );
-
-    req.pipe(connector);
-});
